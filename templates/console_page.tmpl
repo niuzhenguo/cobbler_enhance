@@ -1,0 +1,19 @@
+{% extends "master.tmpl" %}
+
+{% block content %}
+
+<script type="text/javascript">
+function get_jnlp() {
+    window.open('http://172.18.0.1/Java/jviewer.jnlp','RemoteConsole','toolbar=0,resizable=yes,width=400,height=110,left=350,top=300'); 
+}
+</script>
+
+<h1 class="error">Console</h1>
+
+<li>
+<a href="javascript: get_jnlp()">Console Redirection</a>
+</li>
+<li>
+<a href="javascript: history.go(-1)">Go Back</a>
+</li>
+{% endblock content %}

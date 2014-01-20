@@ -1,0 +1,22 @@
+{% extends "master.tmpl" %}
+
+{% block content %}
+
+<form id="action" method="POST" action="">{% csrf_token %}</form>
+<script type="text/javascript">
+function start_rebuild(obj) {
+    document.forms["action"].action = "/cobbler_web/system/rebuild/" + obj;
+    document.forms["action"].submit();
+}
+</script>
+
+<h1 class="error">Rebuild {{ obj_name }}</h1>
+
+
+<li>
+<a href="javascript: start_rebuild('{{ obj_name }}')">Start</a>
+</li>
+<li>
+<a href="javascript: history.go(-1)">Go Back</a>
+</li>
+{% endblock content %}

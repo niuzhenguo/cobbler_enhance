@@ -1,0 +1,245 @@
+{% extends "master.tmpl" %}
+{% load site %}
+{% block content %}
+
+<form id="action" method="POST" action="">{% csrf_token %}</form>
+<script type="text/javascript">
+function items_check_all(){
+    var checkall = document.getElementById("itemsall").checked
+    var items    = document.getElementsByName("items")
+    for(i=0; i<items.length; ++i) {
+        items[i].checked=checkall;
+        items_check(items[i])
+    }
+}
+
+function get_jnlp() {
+    window.open('http://172.18.0.1/Java/jviewer.jnlp','RemoteConsole','toolbar=0,resizable=yes,width=400,height=110,left=350,top=300'); 
+}
+
+function launch_console(obj) {
+    document.forms["action"].action = "/cobbler_web/{{ what }}/console/" + obj;
+    document.forms["action"].submit();
+}
+
+function obj_bios(obj) {
+    if (confirm("Force {{ what }} (" + obj + ") boot into bios?")) {
+        document.forms["action"].action = "/cobbler_web/{{ what }}/bios/" + obj;
+        document.forms["action"].submit();
+    }
+}
+
+function obj_pxe(obj) {
+    if (confirm("Force {{ what }} (" + obj + ") boot pxe?")) {
+        document.forms["action"].action = "/cobbler_web/{{ what }}/pxe/" + obj;
+        document.forms["action"].submit();
+    }
+}
+
+function obj_rebuild(obj) {
+    document.myform.action = "/cobbler_web/{{ what }}/enpxe/" + obj;
+    document.myform.submit()  
+}
+
+function obj_power(obj) {
+    if (confirm("Force to power {{ what }} (" + obj + ")?")) {
+        document.myform.action = "/cobbler_web/{{ what }}/power/" + obj;
+        document.myform.submit()  
+    }
+}
+
+function items_check(obj) {
+    obj.parentNode.parentNode.className=(obj.checked)? 'selected' : '';
+}
+
+function items_checked_values() {
+    var items = document.getElementsByName("items")
+    var values = new Array();
+    for(i=0; i<items.length; ++i) {
+        if (items[i].checked) {
+            values.push(items[i].value)
+        }
+    }
+    s = values.join(" ")
+    return s;
+}
+
+function obj_rename(old) {
+    var newname = window.prompt("Change {{ what }} name to?",old);
+    if (newname != null) {
+        document.forms["action"].action = "/cobbler_web/{{ what }}/rename/" + old + "/" + newname;
+        document.forms["action"].submit();
+    }
+}
+function obj_copy(old) {
+    var newname = window.prompt("Name for the new {{ what }}?",old);
+    if (newname != null) {
+        document.forms["action"].action = "/cobbler_web/{{ what }}/copy/" + old + "/" + newname;
+        document.forms["action"].submit();
+    }
+}
+function obj_delete(old) {
+    if (confirm("Delete {{ what }} (" + old + ") and all child objects?")) {
+        document.forms["action"].action = "/cobbler_web/{{ what }}/delete/" + old;
+        document.forms["action"].submit();
+    }
+}
+
+function action(otype) {
+    sel_action = document.getElementById("actions").value
+    what   = sel_action.split("|")[0]
+    action = sel_action.split("|")[1]
+    document.location = "/cobbler_web/" + what + "/" + action
+}
+
+function action_sort(value) {
+    document.forms["action"].action = '/cobbler_web/{{ what }}/modifylist/sort/' + value;
+    document.forms["action"].submit();
+}
+
+function action_multi(otype) {
+    var values = items_checked_values()
+    if (values == "") {
+       return
+    }
+    document.getElementById("names").value = values
+
+    sel_batchaction = document.getElementById("batchactions").value
+    action = sel_batchaction.split("|")[0]
+    param  = sel_batchaction.split("|")[1]
+
+    if (action == "profile") {
+        param = window.prompt("New installation profile name for checked systems?","")
+        if ((param == null) || (param == "")) {
+            return
+        }
+        value = 1
+    }
+    else {
+        value = null
+    }
+    if ((action == "power") && (param == "on")) {
+        value = confirm("Confirm: Really power up all checked systems?")
+    }
+    if ((action == "power") && (param == "off")) {
+        value = confirm("Confirm: Really power down all checked systems?")
+    }
+    if ((action == "power") && (param == "reboot")) {
+        value = confirm("Confirm: Really reboot all checked systems?")
+    }
+    if ((action == "netboot") && (param == "enable")) {
+        value = confirm("Confirm: Really flag all checked systems for PXE reinstallation?")
+    }
+    if ((action == "netboot") && (param == "disable")) {
+        value = confirm("Confirm: Really disable all checked systems for PXE reinstallation?")
+    }
+    if ((action == "delete" ) && (param == "delete")) {
+        value = confirm("Confirm: Really delete all checked " + otype + "?" )
+    }
+    if ((action == "buildiso" ) && (param == "enable")) {
+        value = confirm("Confirm: Really buildiso for all checked " + otype + "?" )
+    }
+    if ((action == "reposync")) {
+        value = "reposync"
+    }
+
+    if (value) {
+        document.myform.action = "/cobbler_web/" + otype + "/multi/" + action + "/" + param
+        document.myform.submit()  
+    }
+    else {
+        alert("Operation aborted.")
+    }
+}
+</script>
+<h1>{{ what|title }}s</h1>
+<hr />
+<ul id="submenubar">
+  <li>
+    <a class="action" href="/cobbler_web/{{what}}/edit">Create new {{ what }}</a>
+    {% ifequal what "profile" %}<a class="action" href="/cobbler_web/sub{{what}}/edit">Create new sub-{{ what }}</a>{% endifequal %}
+  </li>
+  <li>
+    <select id="batchactions">
+      <option value="" selected="selected">Batch Actions</option>
+      {% for title,action,value in batchactions %}<option value="{{ action }}|{{ value }}">{{ title }}</option>{% endfor %}
+    </select>
+    <input class="button" type="button" value="go" onclick="javascript:action_multi('{{ what }}')" />
+  </li>
+  {% include "paginate.tmpl" %}
+</ul>
+
+<form name="myform" method="post" action="/cobbler_web/{{ what }}/action">
+  {% csrf_token %}
+  <table id="listitems" cellspacing="0">
+    <thead>
+      <tr>
+        <th>
+          <input type="checkbox" id="itemsall" onclick="javascript:items_check_all();" />
+        </th>
+{% for value in columns %}
+        <th>
+          <a href="javascript:action_sort('{{ value.0 }}');">{{ value.0|title }}</a>
+  {% ifequal value.1 "asc" %}
+          &darr;
+  {% endifequal %}
+  {% ifequal value.1 "desc" %}
+          &uarr;
+  {% endifequal %}
+        </th>
+{% endfor %}
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+{% for item in items %}
+      <tr class="{% cycle 'rowodd' 'roweven' %}">
+        <td><input type="checkbox" name="items" value="{{ item.0.1 }}" onclick="javascript:items_check(this);" /></td>
+  {% for value in item %}
+        <td>
+    {% ifequal value.0 "name" %}
+          <a href="/cobbler_web/{{ what }}/edit/{{ value.1 }}">{{ value.1 }}</a>
+    {% endifequal %}
+    {% ifequal value.2 "editlink" %}
+      {% ifnotequal value.1 "~" %}
+          <a href="/cobbler_web/{{ value.0 }}/edit/{{ value.1 }}">{{ value.1 }}</a>
+      {% endifnotequal %}
+    {% endifequal %}
+    {% ifequal value.2 "checkbox" %}
+      {% ifequal value.1 1 %}
+          <input type="checkbox" name="{{ item.name }}" id="{{ item.name }}" value="{{ item.name }}" disabled="disabled" checked="checked" />
+      {% else %}
+          <input type="checkbox" name="{{ item.name }}" id="{{ item.name }}" value="{{ item.name }}" disabled="disabled" />
+      {% endifequal %}
+    {% endifequal %}
+    {% ifequal value.2 "text" %}
+          {{ value.1 }}
+    {% endifequal %}
+        </td>
+  {% endfor %}
+        <td>
+          <a class="action" href="/cobbler_web/{{ what }}/edit/{{ item.0.1 }}">Edit</a>
+          <span class="action" onClick="javascript:obj_copy('{{ item.0.1 }}')">Copy</span> 
+          <span class="action" onClick="javascript:obj_rename('{{ item.0.1 }}')">Rename</span> 
+          <span class="action" onClick="javascript:obj_delete('{{ item.0.1 }}')">Delete</span> 
+  {% ifequal what "system" %}
+          <span class="action" onClick="window.location='/cblr/svc/op/ks/system/{{ item.0.1 }}'">View kickstart</span>
+          <span class="action" onClick="javascript:launch_console('{{ item.0.1 }}')">Remote Control</span> 
+          <span class="action" onClick="javascript:obj_bios('{{ item.0.1 }}')">Bios</span> 
+          <span class="action" onClick="javascript:obj_pxe('{{ item.0.1 }}')">Pxe</span> 
+          <span class="action" onClick="javascript:obj_rebuild('{{ item.0.1 }}')">Rebuild</span> 
+          <span class="action" onClick="javascript:obj_power('{{ item.0.1 }}')">Power</span> 
+  {% endifequal %}
+  {% ifequal what "profile" %}
+          <span class="action" onClick="window.location='/cblr/svc/op/ks/profile/{{ item.0.1 }}'">View kickstart</span>
+  {% endifequal %}
+        </td>
+      </tr>
+{% endfor %}
+    </tbody>
+  </table>
+  <input type="hidden" name="names" id="names" value=""/>
+</form>
+{% include "filter.tmpl" %}
+
+{% endblock content %}
