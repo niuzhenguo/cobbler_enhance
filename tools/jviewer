@@ -1,0 +1,87 @@
+#!/bin/bash
+if [ $# -ne 3 ]
+then
+    echo "Usage: $0 <remote host="" ip="">"
+    exit 2
+fi
+IP=$1
+LOGIN=$2
+PASS=$3
+ 
+# banner
+#echo
+#echo 'JViewer connection script'
+#echo "Connecting to: $IP"
+#echo
+ 
+# fetching credentials
+#echo -n 'username: '
+#read LOGIN
+#echo -n 'password: '
+#stty -echo
+#read PASS
+#stty echo
+#echo
+ 
+# moving to temporary filestytem
+#cd /tmp
+ 
+# fetching binaries
+#echo '* Downloading JViewer...'
+#wget "http://$IP/Java/release/JViewer.jar" -qO JViewer.jar
+#wget "http://$IP/Java/release/Linux_x86_64.jar" -qO Linux_x86_64.jar
+#wget "http://$IP/Java/release/Linux_x86_32.jar" -qO Linux_x86_32.jar
+ 
+# checking that we at least got JViewer.jar
+#if [ ! -f JViewer.jar ]
+#then
+#    echo "* Could not fetch JViewer, exiting"
+#    exit 1
+#fi
+ 
+# getting a valid session id
+#echo '* Logging in...'
+SESSION=` \
+   wget \
+      "http://$IP/rpc/WEBSES/create.asp" \
+      --post-data="WEBVAR_USERNAME=$LOGIN&WEBVAR_PASSWORD=$PASS" \
+      -qO- \
+ | grep SESSION_COOKIE \
+ | sed "s/.*: '//;s/' }.*//"`
+ 
+# checking the session id
+if [ $? -ne 0 ]
+then
+    echo "* Could not fetch the session id, exiting"
+    exit 1
+fi
+if [ "$SESSION" == "Failure_Login_IPMI_Then_LDAP" ]
+then
+    echo "* Invalid credentials, exiting"
+    exit 1
+fi
+ 
+# building the cookie string
+COOKIE="test=1; SessionCookie=$SESSION; lItem=0"
+
+# getting a valid kvm session id
+echo '* Retrieving kvm session...'
+ARGS=` \
+   wget \
+      "http://$IP/Java/jviewer.jnlp" \
+      --cookies=off --header "Cookie: $COOKIE" \
+      -t 1 -qO- > /var/www/html/Java/jviewer.jnlp`
+
+#echo $ARGS
+
+# checking the kvm session id
+#if [ $? -ne 0 ]
+#then
+#    echo "* Could not establish the kvm session, exiting"
+#    exit 1
+#fi
+ 
+# launching the JViewer
+#echo '* Launching Java, enjoy!'
+#java -jar JViewer.jar $ARGS
+#</argument'></remote>
