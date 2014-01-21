@@ -8,6 +8,7 @@ How to install
   * Copy cobbler_web/tools/jreview to /usr/local/bin/ and chmod +x /usr/local/bin/jreview<br />
   * Copy cobbler_web/style.css to /var/www/cobbler_webui_content/style.css<br />
   * mkdir /var/www/html/Java then chmod 777 /var/www/html/Java<br />
+  * change ip: templates/console_page.tmpl and templates/generic_list.tmpl, replace 172.18.10.1 with your cobbler ipaddress <br />
   * service httpd restart<br />
 
 What's new we added
