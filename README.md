@@ -19,6 +19,7 @@ What's new we added
   * Bios reboot<br />
   * Pxe reboot<br />
   * Rebuild Host<br />
+  * Rebuild All Selected Host<br />
   * Clear the left tab<br />
   
 Demo Screen

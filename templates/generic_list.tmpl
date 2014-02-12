@@ -142,6 +142,9 @@ function action_multi(otype) {
     if ((action == "reposync")) {
         value = "reposync"
     }
+    if ((action == "rebuild" && (param == "all"))) {
+        value = confirm("Confirm: Really rebuild for all checked " + otype + "?" )
+    }
 
     if (value) {
         document.myform.action = "/cobbler_web/" + otype + "/multi/" + action + "/" + param

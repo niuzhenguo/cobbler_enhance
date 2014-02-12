@@ -378,6 +378,7 @@ def genlist(request, what, page=None):
            ["Netboot enable","netboot","enable"],
            ["Netboot disable","netboot","disable"],
            ["Build ISO","buildiso","enable"],
+           ["Rebuild","rebuild","all"],
        ]
     if what == "repo":
        columns = [ "name", "mirror" ]
@@ -907,6 +908,51 @@ def generic_domulti(request, what, multi_mode=None, multi_arg=None):
     elif what == "system" and multi_mode == "buildiso":
         options = { "systems" : names, "profiles" : [] }
         remote.background_buildiso(options, request.session['token'])
+    elif what == "system" and multi_mode == "rebuild":
+        netboot_enabled = True
+        for obj_name in names:
+            obj_id = remote.get_system_handle(obj_name, request.session['token'])
+            # 1. netboot enable
+            remote.modify_system(obj_id, "netboot_enabled", netboot_enabled, request.session['token'])
+            remote.save_system(obj_id, request.session['token'], "edit")
+
+        # 2. cobbler sync
+        remote.background_sync({"verbose":"True"},request.session['token'])
+
+        for obj_name in names:
+            obj = remote.get_item(what, obj_name, True)
+
+            if obj:
+                power_address = obj.get("power_address", "")
+                power_user    = obj.get("power_user", "")
+                power_pass    = obj.get("power_pass", "")
+            else:
+                power_address = ""
+                power_user = ""
+                power_pass = ""
+
+            if (power_address and power_user and power_pass):
+            # 3: Enable boot pxe.
+                cmd = "/usr/bin/ipmitool -I lan -H %s -U %s -P %s chassis bootdev pxe" % (power_address, power_user, power_pass)
+                if (os.system(cmd)): 
+                    return error_page(request, "set bootdev pxe failed.")
+
+            # 4: power on or reset node
+                cmd = "/usr/bin/ipmitool -I lan -H %s -U %s -P %s power status" % (power_address, power_user, power_pass)
+                output = os.popen(cmd)
+
+                status = output.read()
+                output.close()
+
+                if ('on' in status):
+                    cmd = "/usr/bin/ipmitool -I lan -H %s -U %s -P %s power reset" % (power_address, power_user, power_pass)
+                elif ('off' in status):
+                    cmd = "/usr/bin/ipmitool -I lan -H %s -U %s -P %s power on" % (power_address, power_user, power_pass)
+                else:
+                    return error_page(request, "can not get power status.")
+
+                if (os.system(cmd)): 
+                    return error_page(request, "power system on/reset failed.")
     elif what == "profile" and multi_mode == "buildiso":
         options = { "profiles" : names, "systems" : [] }
         remote.background_buildiso(options, request.session['token'])
