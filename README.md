@@ -21,7 +21,12 @@ What's new we added
   * Rebuild Host<br />
   * Rebuild All Selected Host<br />
   * Clear the left tab<br />
-  
+
+Server Supported
+-------------------
+  * Supermicro<br />
+  * TYAN<br />
+
 Demo Screen
 -----------
 ![github](http://raw.github.com/niuzhenguo/cobbler_enhance/master/screenshot/system.png)
