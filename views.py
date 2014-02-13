@@ -375,6 +375,7 @@ def genlist(request, what, page=None):
            ["Power off","power","off"],
            ["Reboot","power","reboot"],
            ["Change profile","profile",""],
+           ["Change status","status",""],
            ["Netboot enable","netboot","enable"],
            ["Netboot disable","netboot","disable"],
            ["Build ISO","buildiso","enable"],
@@ -896,6 +897,14 @@ def generic_domulti(request, what, multi_mode=None, multi_arg=None):
         for obj_name in names:
             obj_id = remote.get_system_handle(obj_name, request.session['token'])
             remote.modify_system(obj_id, "profile", profile, request.session['token'])
+            remote.save_system(obj_id, request.session['token'], "edit")
+    elif what == "system" and multi_mode == "status":
+        status = multi_arg
+        if status is None:
+            return error_page(request,"Cannot modify systems without specifying status")
+        for obj_name in names:
+            obj_id = remote.get_system_handle(obj_name, request.session['token'])
+            remote.modify_system(obj_id, "status", status, request.session['token'])
             remote.save_system(obj_id, request.session['token'], "edit")
     elif what == "system" and multi_mode == "power":
         # FIXME: power should not loop, but send the list of all systems

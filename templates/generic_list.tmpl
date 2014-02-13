@@ -118,6 +118,16 @@ function action_multi(otype) {
     else {
         value = null
     }
+    if (action == "status") {
+        param = window.prompt("New installation status name for checked systems?","")
+        if ((param == null) || (param == "")) {
+            return
+        }
+        value = 1
+    }
+    else {
+        value = null
+    }
     if ((action == "power") && (param == "on")) {
         value = confirm("Confirm: Really power up all checked systems?")
     }
