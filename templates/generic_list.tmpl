@@ -8,6 +8,8 @@ function items_check_all(){
     var checkall = document.getElementById("itemsall").checked
     var items    = document.getElementsByName("items")
     for(i=0; i<items.length; ++i) {
+        //alert("zhf:" + items[i].getAttribute("disabled"))
+        if(items[i].getAttribute("disabled")=="") continue
         items[i].checked=checkall;
         items_check(items[i])
     }
